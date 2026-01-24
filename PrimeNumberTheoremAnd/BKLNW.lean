@@ -1,13 +1,16 @@
 import PrimeNumberTheoremAnd.FioriKadiriSwidinsky
 import PrimeNumberTheoremAnd.SecondaryDefinitions
 import PrimeNumberTheoremAnd.CostaPereira
+import PrimeNumberTheoremAnd.BKLNW_app
 
 blueprint_comment /--
 \section{Tools from BKLNW}
-In this file we record the results from \cite{BKLNW}.
+In this file we record the results from \cite{BKLNW}, excluding Appendix A which is treated elsewhere.
+
+NOTE: the current ordering of results in this section needs to be refactored.  This section should be considered as a work in progress.
 -/
 
-open Real
+open Real Chebyshev
 
 namespace BKLNW
 
@@ -18,93 +21,27 @@ structure Inputs where
   hε : ∀ b ≥ 0, ∀ x ≥ exp b, |ψ x - x| ≤ ε b * x
   x₁ : ℝ
   hx₁ : x₁ ≥ exp 7
-  hx₁' : ∀ x ∈ Set.Icc 1 x₁, θ x < x
-  R : ℝ
-  hR : riemannZeta.classicalZeroFree R
-  ZDB : zero_density_bound
+  hx₁' : ∀ x ∈ Set.Ioc 0 x₁, θ x < x
+
+lemma Inputs.epsilon_nonneg (I : Inputs) {b : ℝ} (hb : 0 ≤ b) : 0 ≤ I.ε b := by
+  have := I.hε b hb (exp b) (by grind)
+  grw [←abs_nonneg] at this
+  apply nonneg_of_mul_nonneg_left this (by positivity)
 
 @[blueprint
   "bklnw-cor-2-1"
-  (title := "Corollary 2.1")
+  (title := "BKLNW Corollary 2.1")
   (statement := /-- $\theta(x) \leq (1 + 1.93378 \times 10^{-8}) x$. -/)
   (latexEnv := "corollary")]
 theorem cor_2_1 : ∀ x > 0, θ x ≤ (1 + 1.93378e-8) * x := by sorry
 
-noncomputable def table_8_ε (b : ℝ) : ℝ :=
-  if b < 20 then 1   -- junk value
-  else if b < 21 then 4.2670e-5
-  else if b < 22 then 2.58843e-5
-  else if b < 23 then 1.56996e-5
-  else if b < 24 then 9.52229e-6
-  else if b < 25 then 5.77556e-6
-  else if b < 30 then 3.50306e-6
-  else if b < 35 then 2.87549e-7
-  else if b < 40 then 2.36034e-8
-  else if b < 45 then 1.93378e-8
-  else if b < 50 then 1.09073e-8
-  else if b < 100 then 1.11990e-9
-  else if b < 200 then 2.45299e-12
-  else if b < 300 then 2.18154e-12
-  else if b < 400 then 2.09022e-12
-  else if b < 500 then 2.03981e-12
-  else if b < 600 then 1.99986e-12
-  else if b < 700 then 1.98894e-12
-  else if b < 800 then 1.97643e-12
-  else if b < 900 then 1.96710e-12
-  else if b < 1000 then 1.95987e-12
-  else if b < 1500 then 1.94751e-12
-  else if b < 2000 then 1.93677e-12
-  else if b < 2500 then 1.92279e-12
-  else if b < 3000 then 9.06304e-13
-  else if b < 3500 then 4.59972e-14
-  else if b < 4000 then 2.48641e-15
-  else if b < 4500 then 1.42633e-16
-  else if b < 5000 then 8.68295e-18
-  else if b < 5500 then 5.63030e-19
-  else if b < 6000 then 3.91348e-20
-  else if b < 6500 then 2.94288e-21
-  else if b < 7000 then 2.38493e-22
-  else if b < 7500 then 2.07655e-23
-  else if b < 8000 then 1.96150e-24
-  else if b < 8500 then 1.97611e-25
-  else if b < 9000 then 2.12970e-26
-  else if b < 9500 then 2.44532e-27
-  else if b < 10000 then 2.97001e-28
-  else if b < 10500 then 3.78493e-29
-  else if b < 11000 then 5.10153e-30
-  else if b < 11500 then 7.14264e-31
-  else if b < 12000 then 1.04329e-31
-  else if b < 12500 then 1.59755e-32
-  else if b < 13000 then 2.53362e-33
-  else if b < 13500 then 4.13554e-34
-  else if b < 14000 then 7.21538e-35
-  else if b < 15000 then 1.22655e-35
-  else if b < 16000 then 4.10696e-37
-  else if b < 17000 then 1.51402e-38
-  else if b < 18000 then 6.20397e-40
-  else if b < 19000 then 2.82833e-41
-  else if b < 20000 then 1.36785e-42
-  else if b < 21000 then 7.16209e-44
-  else if b < 22000 then 4.11842e-45
-  else if b < 23000 then 2.43916e-46
-  else if b < 24000 then 1.56474e-47
-  else if b < 25000 then 1.07022e-48
-  else 7.57240e-50
-
 @[blueprint
-  "bknlw-theorem-2"
-  (title := "Theorem 2")
-  (statement := /-- If $b>0$ then $|\psi(x) - x| \leq \varepsilon(b) x$ for all $x \geq \exp(b)$. -/)
-  (latexEnv := "theorem")]
-theorem theorem_2 : ∀ b ≥ 0, ∀ x ≥ exp b,
-    |ψ x - x| ≤ table_8_ε b * x := by sorry
-
-@[blueprint
-  "buthe-eq-1-7"
-  (title := "Buthe equation (1.7)")
+  "from-buthe-eq-1-7"
+  (title := "A consequence of Buthe equation (1.7)")
   (statement := /-- $\theta(x) < x$ for all $1 \leq x \leq 10^{19}$. -/)
-  (latexEnv := "sublemma")]
-theorem buthe_eq_1_7 : ∀ x ∈ Set.Icc 1 1e19, θ x < x := by sorry
+  (latexEnv := "sublemma")
+  (proof := /-- This follows from Theorem \ref{buthe-theorem-2c}. -/)]
+theorem buthe_eq_1_7 : ∀ x ∈ Set.Ioc 0 1e19, θ x < x := by sorry
 
 @[blueprint
   "bklnw-inputs"
@@ -113,20 +50,17 @@ theorem buthe_eq_1_7 : ∀ x ∈ Set.Icc 1 1e19, θ x < x := by sorry
 noncomputable def Inputs.default : Inputs := {
   α := 1.93378e-8
   hα := cor_2_1
-  ε := table_8_ε
-  hε := theorem_2
+  ε := BKLNW_app.table_8_ε
+  hε := BKLNW_app.theorem_2
   x₁ := 1e19
   hx₁ := by grw [← exp_one_rpow, rpow_ofNat, exp_one_lt_three]; norm_num
   hx₁' := buthe_eq_1_7
-  R := 5.5666305  -- a slightly more conservative value of 5.573412 was used in the paper
-  hR := MT_theorem_1
-  ZDB := FKS.corollary_2_9_merged -- stronger than what was used here, I think
 }
 
 
 @[blueprint
   "bklnw-eq-2-4"
-  (title := "Equation 2.4")
+  (title := "BKLNW Equation 2.4")
   (statement := /--
   $$ f(x) := \sum_{k=3}^{\lfloor \log x / \log 2 \rfloor} x^{1/k - 1/3}.$$
   -/)]
@@ -134,7 +68,7 @@ noncomputable def f (x : ℝ) : ℝ := ∑ k ∈ Finset.Icc 3 ⌊ (log x)/(log 2
 
 @[blueprint
   "bklnw-prop-3-sub-1"
-  (title := "Proposition 3, substep 1")
+  (title := "BKLNW Proposition 3, substep 1")
   (statement := /-- Let $x \geq x_0$ and let $\alpha$ be admissible. Then
 \[
 \frac{\psi(x) - \theta(x) - \theta(x^{1/2})}{x^{1/3}} \leq (1 + \alpha) \sum_{k=3}^{\lfloor \frac{\log x}{\log 2} \rfloor} x^{\frac{1}{k} - \frac{1}{3}}.
@@ -149,7 +83,7 @@ theorem prop_3_sub_1 (I : Inputs) {x₀ x : ℝ} (hx₀ : x₀ ≥ 1)
 
 @[blueprint
   "bklnw-prop-3-sub-2"
-  (title := "Proposition 3, substep 2")
+  (title := "BKLNW Proposition 3, substep 2")
   (statement := /-- $f$ decreases on $[2^n, 2^{n+1})$.-/)
   (proof := /-- Clear. -/)
   (latexEnv := "sublemma")
@@ -178,7 +112,7 @@ noncomputable def u (n : ℕ) : ℝ := ∑ k ∈ Finset.Icc 4 n, 2^((n/k:ℝ) - 
 
 @[blueprint
   "bklnw-prop-3-sub-3"
-  (title := "Proposition 3, substep 3")
+  (title := "BKLNW Proposition 3, substep 3")
   (statement := /-- $f(2^n) = 1 + u_n$.-/)
   (proof := /-- Clear. -/)
   (latexEnv := "sublemma")
@@ -191,26 +125,94 @@ theorem prop_3_sub_3 (n : ℕ) (hn : n ≥ 3) : f (2^n) = 1 + u n := by
   rw [← rpow_natCast _ n, ← rpow_mul (by norm_num)]
   field_simp
 
+noncomputable def summand (k n : ℕ) : ℝ :=
+  (2 : ℝ) ^ ((n + 1 : ℝ) / k) * ((2 : ℝ) ^ (1 / 3 - 1 / k : ℝ) - 1)
+
+lemma summand_pos.aux {k : ℕ} (hk : 3 < k) : 0 < (2 : ℝ) ^ (1 / 3 - 1 / k : ℝ) - 1 :=
+  sub_pos.mpr <| Real.one_lt_rpow (by grind) <|
+    sub_pos.mpr <| one_div_lt_one_div_of_lt (by grind) (by exact_mod_cast hk)
+
+lemma summand_pos {k : ℕ} (hk : 3 < k) (n : ℕ) : 0 < summand k n :=
+  mul_pos (by positivity) (summand_pos.aux hk)
+
+lemma summand_mono {k : ℕ} (hk : 3 < k) : StrictMono (summand k) :=
+  (Real.strictMono_rpow_of_base_gt_one (by grind : (1 : ℝ) < 2))
+  |>.comp (Nat.strictMono_cast.add_const 1 |>.div_const (by positivity))
+  |>.mul_const (summand_pos.aux hk)
+
+lemma sum_gt.aux (k : ℕ) (a b : ℝ) (hk : 3 < k := by decide) (hb1 : 0 ≤ b - 1 := by norm_num only)
+    (ha : a ^ k ≤ 1024 := by norm_num only) (hb : b ^ (3 * k) ≤ 2 ^ (k - 3) := by norm_num only) :
+    a * (b - 1) ≤ summand k 9 := by
+  have ha_bound : a ≤ 2 ^ (10 / k : ℝ) := calc
+    a ≤ (1024 : ℝ) ^ (1 / k : ℝ) := by
+      contrapose! ha
+      calc
+        _ ≤ ((1024 : ℝ) ^ (1 / k : ℝ)) ^ k := by
+          rw [← rpow_mul_natCast (by positivity), one_div_mul_cancel (by positivity), rpow_one]
+        _ < _ := pow_lt_pow_left₀ ha (by positivity) (by positivity)
+    _ = _ := by norm_num [div_eq_mul_inv, rpow_mul]
+  have hb_bound : b - 1 ≤ 2 ^ (1 / 3 - 1 / k : ℝ) - 1 := calc
+    _ ≤ ((2 : ℝ) ^ (k - 3 : ℝ)) ^ (1 / (3 * k : ℝ)) - 1 := by
+      gcongr
+      contrapose! hb
+      calc
+        _ ≤ (((2 : ℝ) ^ (k - 3 : ℝ)) ^ (1 / (3 * k : ℝ))) ^ (3 * k) := by
+          rw [← rpow_mul_natCast (by positivity), ← Real.rpow_natCast, Nat.cast_sub hk.le]
+          simp
+          field_simp
+          simp
+        _ < _ := pow_lt_pow_left₀ hb (by positivity) (by positivity)
+    _ = _ := by rw [← Real.rpow_mul (by positivity), mul_one_div]; field_simp
+  grw [ha_bound, hb_bound]
+  norm_num [summand]
+
+lemma sum_gt {n : ℕ} (hn : 9 ≤ n) : 2.12 < ∑ k ∈ Finset.Icc 4 n, summand k n := calc
+  _ < ∑ k ∈ Finset.Icc 4 9, summand k 9 := by
+    simp only [Nat.reduceLeDiff, Finset.sum_Icc_succ_top, Finset.Icc_self, Finset.sum_singleton]
+    grw [← sum_gt.aux 4 5.65 1.05, ← sum_gt.aux 5 4 1.09, ← sum_gt.aux 6 3.17 1.12,
+      ← sum_gt.aux 7 2.69 1.14, ← sum_gt.aux 8 2.37 1.155, ← sum_gt.aux 9 2.16 1.1665]
+    norm_num
+  _ ≤ ∑ k ∈ Finset.Icc 4 n, summand k 9 :=
+    Finset.sum_le_sum_of_subset_of_nonneg (Finset.Icc_subset_Icc_right hn) fun k _ _ ↦
+      (summand_pos (by grind) 9).le
+  _ ≤ _ := Finset.sum_le_sum fun k hk ↦ (summand_mono (by grind)).le_iff_le.mpr hn
+
+lemma u_diff_factored {n : ℕ} (hn : 4 ≤ n) :
+    u (n + 1) - u n = 2 ^ (-(n + 1) / 3 : ℝ) * (2 - ∑ k ∈ Finset.Icc 4 n, summand k n) := calc
+  u (n + 1) - u n = (∑ k ∈ Finset.Icc 4 n,
+      (2 : ℝ) ^ ((n + 1) / (k : ℝ) - (n + 1) / 3) * (1 - 2 ^ (1 / (3 : ℝ) - 1 / ↑k)))
+      + 2 ^ (1 - (n + 1) / (3 : ℝ)) := by
+    rw [u, u, Finset.sum_Icc_succ_top (Nat.le_add_right_of_le hn), div_self (by norm_cast),
+      ← sub_add_eq_add_sub, ← Finset.sum_sub_distrib, Nat.cast_add, Nat.cast_one]
+    congr with x
+    rw [mul_sub, mul_one, ← rpow_add two_pos]
+    grind
+  _ = _ := by
+    rw [mul_sub, Finset.mul_sum, ← rpow_add_one two_pos.ne', neg_div, neg_add_eq_sub,
+      ← neg_add_eq_sub _ (2 ^ _), ← Finset.sum_neg_distrib]
+    congr with x
+    rw [summand, ← mul_assoc, ← rpow_add two_pos]
+    grind
+
 @[blueprint
   "bklnw-prop-3-sub-4"
-  (title := "Proposition 3, substep 4")
+  (title := "BKLNW Proposition 3, substep 4")
   (statement := /-- $u_{n+1} < u_n$ for $n \geq 9$.-/)
   (proof := /-- We have
 \begin{equation}
 u_{n+1} - u_n = \sum_{k=4}^{n} 2^{\frac{n+1}{k} - \frac{n+1}{3}}(1 - 2^{\frac{1}{3} - \frac{1}{k}}) + 2^{1 - \frac{n+1}{3}} = 2^{-\frac{n+1}{3}} \left( 2 - \sum_{k=4}^{n} 2^{\frac{n+1}{k}}(2^{\frac{1}{3} - \frac{1}{k}} - 1) \right).
 \end{equation}
-Observe that if $n \geq 20$, then
-\[
-\sum_{k=4}^{n} 2^{\frac{n+1}{k}}(2^{\frac{1}{3} - \frac{1}{k}} - 1) > 2^{\frac{n+1}{4}}(2^{\frac{1}{3} - \frac{1}{4}} - 1) \geq 2^{\frac{21}{4}}(2^{\frac{1}{12}} - 1) > 2
-\]
-and it follows that $u_{n+1} - u_n < 0$ for $n \geq 20$. Finally, a numerical calculation verifies that the right hand side of the equation above is negative for $9 \leq n \leq 19$. -/)
+Define $s(k, n) := 2^{\frac{n+1}{k}}(2^{\frac{1}{3} - \frac{1}{k}} - 1)$. Note that $s(k, n)$ is monotone increasing in $n$ for each fixed $k \geq 4$. By numerical computation (using the trick $x \le 2 ^ {p / q} \iff x ^ q \le 2 ^ p$ to verify decimal lower bounds $x$), $\sum_{k=4}^{n} s(k, n) \ge \sum_{k=4}^{9} s(k, 9) > 2.12 > 2$. Thus $u_{n+1} - u_n < 0$. -/)
   (latexEnv := "sublemma")
   (discussion := 634)]
-theorem prop_3_sub_4 (n : ℕ) (hn : n ≥ 9) : u (n + 1) < u n := by sorry
+theorem prop_3_sub_4 (n : ℕ) (hn : 9 ≤ n) : u (n + 1) < u n := by
+  grw [← sub_neg, u_diff_factored (by grind), ← sum_gt hn]
+  norm_num
+  positivity
 
 @[blueprint
   "bklnw-prop-3-sub-5"
-  (title := "Proposition 3, substep 5")
+  (title := "BKLNW Proposition 3, substep 5")
   (statement := /-- $f(2^n) > f(2^{n+1})$ for $n \geq 9$. -/)
   (proof := /-- This follows from Sublemmas \ref{bklnw-prop-3-sub-3} and \ref{bklnw-prop-3-sub-4}. -/)
   (latexEnv := "sublemma")
@@ -221,7 +223,7 @@ theorem prop_3_sub_5 (n : ℕ) (hn : n ≥ 9) : f (2^n) > f (2^(n + 1)) := by
 
 @[blueprint
   "bklnw-prop-3-sub-6"
-  (title := "Proposition 3, substep 6")
+  (title := "BKLNW Proposition 3, substep 6")
   (statement := /-- $f(x) \leq f(2^{\lfloor \frac{\log x_0}{\log 2} \rfloor + 1})$ on $[2^{\lfloor \frac{\log x_0}{\log 2} \rfloor + 1}, \infty)$. -/)
   (proof := /-- Follows from Sublemmas \ref{bklnw-prop-3-sub-2} and \ref{bklnw-prop-3-sub-5}. -/)
   (latexEnv := "sublemma")
@@ -232,7 +234,7 @@ theorem prop_3_sub_6 (x₀ : ℝ) (hx₀ : x₀ ≥ 2 ^ 9) (x : ℝ)
 
 @[blueprint
   "bklnw-prop-3-sub-7"
-  (title := "Proposition 3, substep 7")
+  (title := "BKLNW Proposition 3, substep 7")
   (statement := /-- $f(x) \leq f(x_0)$ for $x \in [x_0, 2^{\lfloor \frac{\log x_0}{\log 2} \rfloor + 1})$. -/)
   (proof := /-- Follows since $f(x)$ decreases on $[2^{\lfloor \frac{\log x_0}{\log 2} \rfloor}, 2^{\lfloor \frac{\log x_0}{\log 2} \rfloor + 1})$. -/)
   (latexEnv := "sublemma")
@@ -275,7 +277,7 @@ theorem prop_3_sub_7 (x₀ : ℝ) (hx₀ : x₀ ≥ 2 ^ 9) (x : ℝ)
 
 @[blueprint
   "bklnw-prop-3-sub-8"
-  (title := "Proposition 3, substep 8")
+  (title := "BKLNW Proposition 3, substep 8")
   (statement := /--  $f(x) \leq \max\left(f(x_0), f(2^{\lfloor \frac{\log x_0}{\log 2} \rfloor + 1})\right)$. -/)
   (proof := /-- Combines previous sublemmas. -/)
   (latexEnv := "sublemma")
@@ -289,7 +291,7 @@ theorem prop_3_sub_8 (x₀ : ℝ) (hx₀ : x₀ ≥ 2 ^ 9) (x : ℝ)
 
 @[blueprint
   "bklnw-prop-3"
-  (title := "Proposition 3")
+  (title := "BKLNW Proposition 3")
   (statement := /--  Let $x_0 \geq 2^9$. Let $\alpha > 0$ exist such that $\theta(x) \leq (1 + \alpha)x$ for $x > 0$. Then for $x \geq x_0$,
 \begin{equation}
 \sum_{k=3}^{\lfloor \frac{\log x}{\log 2} \rfloor} \theta(x^{1/k}) \leq \eta x^{1/3},
@@ -313,7 +315,7 @@ theorem prop_3 (I : Inputs) {x₀ x : ℝ} (hx₀ : x₀ ≥ 2 ^ 9)
 
 @[blueprint
   "bklnw-cor-3-1"
-  (title := "Corollary 3.1")
+  (title := "BKLNW Corollary 3.1")
   (statement := /--  Let $b \geq 7$. Assume $x \geq e^b$. Then we have
 \[
 \psi(x) - \theta(x) - \theta(x^{1/2}) \leq \eta x^{1/3},
@@ -333,13 +335,16 @@ theorem cor_3_1 (I : Inputs) {b x : ℝ} (hb : b ≥ 7) (x : ℝ) (hx : x ≥ ex
 
 @[blueprint
   "bklnw-prop-4-a"
-  (title := "Proposition 4, part a")
-  (statement := /--  If $b \leq 2\log x_1$, then we have
+  (title := "BKLNW Proposition 4, part a")
+  (statement := /--  If $7 \leq b \leq 2\log x_1$, then we have
 \begin{equation}
-\theta(x^{1/2}) < (1 + \varepsilon(\log x_1))x^{1/2} \quad \text{for } x \geq e^b.
+\theta(x^{1/2}) \leq (1 + \varepsilon(\log x_1))x^{1/2} \quad \text{for } x \geq e^b.
 \end{equation}
  -/)
-  (proof := /-- If $e^b \leq x \leq x_1^2$, then $x^{1/2} \leq x_1$, and thus
+  (proof := /--
+Note that in the paper, the inequality in Proposition 4 is strict, but the
+argument can only show nonstrict inequalities.
+If $e^b \leq x \leq x_1^2$, then $x^{1/2} \leq x_1$, and thus
 \[
 \theta(x^{1/2}) < x^{1/2} \quad \text{for } e^b \leq x \leq x_1^2.
 \]
@@ -351,18 +356,35 @@ since $\log x_1 \geq 7$. The last two inequalities for $\theta(x^{1/2})$ combine
  -/)
   (latexEnv := "proposition")
   (discussion := 641)]
-theorem prop_4_a (I : Inputs) {b x : ℝ} (hb : b ≤ 2 * log I.x₁) (hx : x ≥ exp b) :
-    θ (x^(1/2:ℝ)) < (1 + I.ε (log I.x₁)) * x^(1/2:ℝ) := by sorry
+theorem prop_4_a (I : Inputs) {b x : ℝ} (hx : exp b ≤ x) :
+    θ (x ^ (1 / 2 : ℝ)) ≤ (1 + I.ε (log I.x₁)) * x ^ (1 / 2 : ℝ) := by
+  have ha : 1 < I.x₁ := by linarith [I.hx₁, (one_lt_exp_iff.2 (by linarith) : 1 < exp 7)]
+  have hb : 0 < log I.x₁ := log_pos (by linarith)
+  by_cases! hp : x ^ (1 / 2 : ℝ) ≤ I.x₁
+  · have hq : 0 < x ^ (1 / 2 : ℝ) := by
+      suffices 0 < x from rpow_pos_of_pos this _
+      exact (exp_pos b).trans_le hx
+    refine (I.hx₁' (x ^ (1 / 2 : ℝ)) ⟨hq, hp⟩).le.trans ?_
+    nth_rw 1 [← one_mul (x ^ (1 / 2 : ℝ))]
+    gcongr
+    linarith [I.epsilon_nonneg hb.le]
+  · calc
+    _ ≤ ψ (x ^ (1 / 2 : ℝ)) := theta_le_psi _
+    _ ≤ (1 + I.ε (log I.x₁)) * x ^ (1 / 2 : ℝ) := by
+      have := (le_abs_self (ψ (x ^ (1 / 2 : ℝ)) - x ^ (1 / 2 : ℝ))).trans <|
+        I.hε (log I.x₁) hb.le (x ^ (1 / 2 : ℝ)) (exp_log (by linarith : 0 < I.x₁) ▸ hp).le
+      linarith
 
 @[blueprint
   "bklnw-prop-4-b"
-  (title := "Proposition 4, part b")
+  (title := "BKLNW Proposition 4, part b")
   (statement := /--  If $b > 2\log x_1$, then we have
 \[
-\theta(x^{1/2}) < (1 + \varepsilon(b/2))x^{1/2} \quad \text{for } x \geq e^b.
+\theta(x^{1/2}) \leq (1 + \varepsilon(b/2))x^{1/2} \quad \text{for } x \geq e^b.
 \]
  -/)
-  (proof := /-- As in the above subcase, we have for $x \geq e^b$
+  (proof := /-- Note that in the paper, the inequality in Proposition 4 is strict, but the
+argument can only show nonstrict inequalities. As in the above subcase, we have for $x \geq e^b$
 \[
 \theta(x^{1/2}) \leq \psi(x^{1/2}) \leq (1 + \varepsilon(b/2))x^{1/2},
 \]
@@ -370,19 +392,38 @@ since $x^{1/2} > e^{b/2} > x_1 \geq e^7$.
  -/)
   (latexEnv := "proposition")
   (discussion := 642)]
-theorem prop_4_b (I : Inputs) {b x : ℝ} (hb : b > 2 * log I.x₁) (hx : x ≥ exp b) :
-    θ (x^(1/2)) < (1 + I.ε (b / 2)) * x^(1/2) := by sorry
+theorem prop_4_b (I : Inputs) {b x : ℝ} (hb : 7 ≤ b) (hx : exp b ≤ x) :
+    θ (x ^ (1 / 2 : ℝ)) ≤ (1 + I.ε (b / 2)) * x ^ (1 / 2 : ℝ) := calc
+  _ ≤ ψ (x ^ (1 / 2 : ℝ)) := theta_le_psi _
+  _ ≤ (1 + I.ε (b / 2)) * x ^ (1 / 2 : ℝ) := by
+    have : exp (b / 2) ≤ x ^ (1 / 2 : ℝ) := by
+      rw [exp_half, ← sqrt_eq_rpow]
+      exact sqrt_monotone hx
+    have := (le_abs_self _).trans <| I.hε (b / 2) (by linarith) (x ^ (1 / 2 : ℝ)) this
+    linarith
 
+@[blueprint
+  "bklnw-def-a-1"
+  (title := "Definition of a1")
+  (statement := /--  $a_1$ is equal to $1 + \varepsilon(\log x_1)$ if $b \leq 2\log x_1$, and equal to $1 + \varepsilon(b/2)$ if $b > 2\log x_1$. -/)]
 noncomputable def Inputs.a₁ (I : Inputs) (b : ℝ) : ℝ :=
   if b ≤ 2 * log I.x₁ then 1 + I.ε (log I.x₁)
   else 1 + I.ε (b / 2)
 
+@[blueprint
+  "bklnw-def-a-2"
+  (title := "Definition of a2")
+  (statement := /--  $a_2$ is defined by
+\[
+a_2 = (1 + \alpha) \max\left( f(e^b), f(2^{\lfloor \frac{b}{\log 2} \rfloor + 1}) \right).
+\]
+ -/)]
 noncomputable def Inputs.a₂ (I : Inputs) (b : ℝ) : ℝ :=
   (1 + I.α) * (max (f (exp b)) (f (⌊ b / (log 2) ⌋ + 1)))
 
 @[blueprint
   "bklnw-thm-5"
-  (title := "Theorem 5")
+  (title := "BKLNW Theorem 5")
   (statement := /--  Let $\alpha > 0$ exist such that
 \[
 \theta(x) \leq (1 + \alpha)x \quad \text{for all } x > 0.
@@ -424,16 +465,15 @@ noncomputable def a₂ : ℝ → ℝ := Inputs.default.a₂
 
 @[blueprint
   "bklnw-cor-5-1"
-  (title := "Corollary 5.1")
+  (title := "BKLNW Corollary 5.1")
   (statement := /--  Let $b \geq 7$. Then for all $x \geq e^b$ we have $\psi(x) - \vartheta(x) < a_1 x^{1/2} + a_2 x^{1/3}$, where $a_1 = a_1(b) = 1 + 1.93378 \times 10^{-8}$ if $b \leq 38 \log 10$, $1 + \varepsilon(b/2)$ if $b > 38 \log 10$, and $a_2 = a_2(b) = (1 + 1.93378 \times 10^{-8}) \max\left( f(e^b), f(2^{\lfloor \frac{b}{\log 2} \rfloor + 1}) \right)$, where $f$ is defined by (2.4) and values for $\varepsilon(b/2)$ are from Table 8. -/)
-  (proof := /-- This is Theorem 5 applied to the default inputs in Definition \ref{bklnw-inputs}. -/)]
+  (proof := /-- This is Theorem 5 applied to the default inputs in Definition \ref{bklnw-inputs}. -/)
+  (discussion := 743)]
 theorem cor_5_1 {b x : ℝ} (hb : b ≥ 7) (hx : x ≥ exp b) :
     ψ x - θ x < a₁ b * x^(1/2:ℝ) + a₂ b * x^(1/3:ℝ) := by sorry
 
-/- We have the following values for a2. b 20 25 30 35 40 43 a2 1.4263 1.2196 1.1211 1.07086 1.04320 1.03253 1.01718 b 100 150 200 250 a2 1+2.421·10−4 1+3.749·10−6 1+7.712·10−8 1+2.024·10−8 1+1.936·10−8 -/
-
 def table_cor_5_1 : List (ℝ × ℝ × ℕ) :=
-  [ (20, 1.4263, 4)
+  [(20, 1.4263, 4)
   , (25, 1.2196, 4)
   , (30, 1.1211, 4)
   , (35, 1.07086, 5)
@@ -444,11 +484,11 @@ def table_cor_5_1 : List (ℝ × ℝ × ℕ) :=
   , (200, 1 + 7.712e-8, 9)
   , (250, 1 + 2.024e-8, 9)
   , (300, 1 + 1.936e-8, 9)
-  ]
+ ]
 
 @[blueprint
   "bklnw-cor-5-1-rem"
-  (title := "Remark after Corollary 5.1")
+  (title := "Remark after BKLNW Corollary 5.1")
   (statement := /--  We have the following values for $a_2$, given by the table after \cite[Corollary 5.1]{BKLNW} -/)
   (latexEnv := "remark")]
 theorem cor_5_1_rem (b a₂b : ℝ) (m : ℕ) (hb : (b, a₂b, m) ∈ table_cor_5_1) :
@@ -586,7 +626,7 @@ noncomputable def Table_15 : List (ℝ × (Fin 5 → ℝ)) := [
 
 @[blueprint
   "bklnw-thm-1a"
-  (title := "Theorem 1a")
+  (title := "BKLNW Theorem 1a")
   (statement := /--  For any fixed $X_0 \geq 1$, there exists $m_0 > 0$ such that, for all $x \geq X_0$
   $$ x(1 - m_0) \leq \theta(x). $$
   For any fixed $X_1 \geq 1$, there exists $M_0 > 0$ such that, for all $x \geq X_1$
@@ -612,7 +652,7 @@ theorem thm_1a_table {X₀ m₀ M₀ : ℝ} (h : (X₀, M₀, m₀) ∈ Table_14
 
 @[blueprint
   "bklnw-thm-1b"
-  (title := "Theorem 1b")
+  (title := "BKLNW Theorem 1b")
   (statement := /--  Let $k$ be an integer with $1 \leq k \leq 5$. For any fixed $X_0 \geq 1$, there exists $m_k > 0$ such that, for all $x \geq X_0$
   $$ x(1 - \frac{m_k}{(\log x)^k}) \leq \theta(x). $$
   For any fixed $X_1 \geq 1$, there exists $M_k > 0$ such that, for all $x \geq X_1$
@@ -627,8 +667,8 @@ theorem thm_1b (k : ℕ) (hk : k ≤ 5) {X₀ X₁ x : ℝ} (hx₀ : x ≥ X₀)
   (x * (1 - mₖ / (log x)^k) ≤ θ x) ∧ (θ x ≤ x * (1 + Mₖ / (log x)^k)) := by sorry
 
 @[blueprint
-  "bklnw-thm-1b"
-  (title := "Theorem 1b")
+  "bklnw-thm-1b-table"
+  (title := "BKLNW Theorem 1b, table form")
   (statement := /--  See \cite[Table 15]{BKLNW} for values of $m_k$ and $M_k$, for $k \in \{1,2,3,4,5\}$.
   -/)
   (latexEnv := "theorem")]
@@ -636,89 +676,5 @@ theorem thm_1b_table {X₀ : ℝ} {M : Fin 5 → ℝ} (h : (X₀, M) ∈ Table_1
   x * (1 - M k / (log x)^(k.val + 1)) ≤ θ x ∧ θ x ≤ x * (1 + M k / (log x)^(k.val + 1)) :=
   by sorry
 
--- TODO: input the statements and arguments from Appendix A
-
-noncomputable def Inputs.c1 (I : Inputs) (σ : ℝ) : ℝ := I.ZDB.c₁ σ
-noncomputable def Inputs.c2 (I : Inputs) (σ : ℝ) : ℝ := I.ZDB.c₂ σ
-
-@[blueprint
-  "bklnw-eq_A_16"
-  (title := "Equation (A.16)")
-  (statement := /-- We define
-  $$ k(\sigma, x_0) = \left( \exp\left(\frac{10 - 16 \sigma}{3} \left( \frac{\log x_0}{R} \right)^{1/2} \right) \left( \frac{\log x_0}{R} \right)^{5 - 2 \sigma} \right)^{-1}. $$
-  -/)]
-noncomputable def Inputs.k (I : Inputs) (σ x₀ : ℝ) : ℝ := (exp ((10 - 16 * σ) / 3 * (log x₀ / I.R)^(1/2)) * (log x₀ / I.R)^(5 - 2 * σ))^(-1:ℝ)
-
-@[blueprint
-  "bklnw-eq_A_17"
-  (title := "Equation (A.17)")
-  (statement := /-- We define
-  $$ c_3(\sigma, x_0) = 2 \exp\left( -2 \left( \frac{\log x_0}{R} \right)^{1/2} \right) (\log x_0)^2 k(\sigma, x_0). $$
-  -/)]
-noncomputable def Inputs.c3 (I : Inputs) (σ x₀ : ℝ) : ℝ :=
-  2 * exp (-2 * (log x₀ / I.R)^(1/2)) * (log x₀)^2 * I.k σ x₀
-
-@[blueprint
-  "bklnw-eq_A_18"
-  (title := "Equation (A.18)")
-  (statement := /-- We define
-  $$ c_4(\sigma, x_0) = x_0^{\sigma - 1} \left( \frac{2 \log x_0}{\pi R} + 1.8642 \right) k(\sigma, x_0). $$
-  -/)]
-noncomputable def Inputs.c4 (I : Inputs) (σ x₀ : ℝ) : ℝ :=
-  x₀^(σ - 1:ℝ) * (2 * log x₀ / π / I.R + 1.8642) * I.k σ x₀
-
-@[blueprint
-  "bklnw-eq_A_19"
-  (title := "Equation (A.19)")
-  (statement := /-- We define
-  $$ c_5(\sigma, x_0) = 8.01 \cdot c_2(\sigma) \exp\left( -2 \left( \frac{\log x_0}{R} \right)^{1/2} \right) \frac{\log x_0}{R} k(\sigma, x_0). $$
-  -/)]
-noncomputable def Inputs.c5 (I : Inputs) (σ x₀ : ℝ) : ℝ :=
-  8.01 * I.c2 σ * exp (-2 * (log x₀ / I.R)^(1/2)) * (log x₀ / I.R) * I.k σ x₀
-
-@[blueprint
-  "bklnw-eq_A_20"
-  (title := "Equation (A.20)")
-  (statement := /-- We define
-  $$ A(\sigma, x_0) = 2.0025 \cdot 25^{-2 \sigma} \cdot c_1(\sigma) + c_3(\sigma, x_0) + c_4(\sigma, x_0) + c_5(\sigma, x_0). $$
-  -/)]
-noncomputable def Inputs.A (I : Inputs) (σ x₀ : ℝ) : ℝ :=
-  2.0025 * 25^(-2 * σ) * I.c1 σ + I.c3 σ x₀ + I.c4 σ x₀ + I.c5 σ x₀
-
-@[blueprint
-  "bklnw-eq_A_21"
-  (title := "Equation (A.21)")
-  (statement := /-- We define
-  $$ B = 5/2 - \sigma, $$
-  and
-  $$ C = 16 \sigma/3 - \frac{10}{3}. $$
-  -/)]
-noncomputable def Inputs.B (_ : Inputs) (σ : ℝ) : ℝ := 5/2 - σ
-
-@[blueprint
-  "bklnw-eq_A_21"]
-noncomputable def Inputs.C (_ : Inputs) (σ : ℝ) : ℝ := 16 * σ / 3 - 10 / 3
-
-@[blueprint
-  "bklnw-thm-14"
-  (title := "Theorem 14")
-  (statement := /-- Let $x_0 \geq 1000$ and let $\sigma \in [0.75, 1)$. For all $x \geq e^{x_0}$,
-  $$ \frac{|\psi(x) - x|}{x} \leq A \left( \frac{\log x}{R} \right)^B \exp\left( -C \left( \frac{\log x}{R} \right)^{1/2} \right) $$
-  where $A$, $B$, and $C$ are defined in (A.20) and (A.21). -/)]
-theorem thm_14 {I : Inputs} {x₀ σ x : ℝ} (hx₀ : x₀ ≥ 1000) (hσ : 0.75 ≤ σ ∧ σ < 1) (hx : x ≥ exp x₀) :
-  Eψ x ≤ I.A σ x₀ * (log x / I.R)^(I.B σ) * exp (-I.C σ * (log x / I.R)^(1/2:ℝ)) := by sorry
-
-@[blueprint
-  "bklnw-cor-14.1"
-  (title := "Corollary 14.1")
-  (statement := /-- Let $x_0 \geq 1000$. For all $x \geq e^{x_0}$,
-  $$ \frac{|\theta(x) - x|}{x} \leq A' \left( \frac{\log x}{R} \right)^B \exp\left( -C \left( \frac{\log x}{R} \right)^{1/2} \right) $$
-  where $B$ and $C$ are defined in (A.21) and
-  $$ A' = A \left( 1 + \frac{1}{A} \left( \frac{R}{\log x_0} \right)^B \exp\left( C \frac{\log x_0}{R} \right) \left( a_1(x_0) \exp\left( -\frac{x_0}{2} \right) + a_2(x_0) \exp\left( -\frac{2 x_0}{3} \right) \right) \right), $$
-  where $a_1$ and $a_2$ are defined in Corollary 5.1. -/)]
-theorem cor_14_1 {I : Inputs} {x₀ σ x : ℝ} (hx₀ : x₀ ≥ 1000) (hσ : 0.75 ≤ σ ∧ σ < 1) (hx : x ≥ exp x₀) :
-  Eθ x ≤ I.A σ x₀ * (1 + (1 / I.A σ x₀) * (I.R / log x₀)^(I.B σ) * exp (I.C σ * (log x₀ / I.R)) *
-    (I.a₁ x₀ * exp (-x₀ / 2) + I.a₂ x₀ * exp (-2 * x₀ / 3))) *
-    (log x / I.R)^(I.B σ) * exp (-I.C σ * (log x / I.R)^(1/2:ℝ)) := by sorry
 
 end BKLNW
