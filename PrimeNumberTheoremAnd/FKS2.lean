@@ -790,6 +790,161 @@ theorem theorem_6_1 {x₀ x₁ : ℝ} (h : x₁ ≥ max x₀ 14)
     εθ_num x₁ * (log x / x) * ∫ t in x₁..x, 1 / (log t) ^ 2 :=
   sorry
 
+lemma constant_sign {f : ℝ → ℝ} {s : Set ℝ} (hs : IsPreconnected s) (hf : ContinuousOn f s)
+    (hfx : ∀ x ∈ s, f x ≠ 0) : f '' s ⊆ Set.Ioi 0 ∨ f '' s ⊆ Set.Iio 0 :=
+  (hs.image f hf).subset_or_subset isOpen_Ioi isOpen_Iio (by grind)
+  (by grind : f '' s ⊆ Set.Ioi 0 ∪ Set.Iio 0)
+
+lemma constant_sign' {f : ℝ → ℝ} {s : Set ℝ} (hs : IsPreconnected s) (hf : ContinuousOn f s)
+    (hfx : ∀ x ∈ s, f x ≠ 0) : (∀ x ∈ s, 0 < f x) ∨ ∀ x ∈ s, f x < 0 := by
+  rcases constant_sign hs hf hfx with (ha | hb)
+  · exact Or.inl fun x hx => by simp_all; grind
+  · exact Or.inr fun x hx => by simp_all; grind
+
+lemma positive_if_nonzero {f : ℝ → ℝ} {s : Set ℝ} (hs : IsPreconnected s) (hf : ContinuousOn f s)
+    (hfx : ∀ x ∈ s, f x ≠ 0) (hfy : ∃ y ∈ s, 0 < f y) : f '' s ⊆ Set.Ioi 0 := by
+  rcases constant_sign hs hf hfx with (ha | hb)
+  · exact ha
+  · simp_all; grind
+
+/-- Suppose `f` is differentiable on `(2, ∞)` and the `f'` is strictly decreasing on `(x₁, ∞)`.
+Suppose `f' xₘ = 0` at some point `xₘ > x₁`. Then `xₘ` is the unique maximum on `[x₁, ∞)`. -/
+lemma hasMax {f : ℝ → ℝ} {x₁ : ℝ} (he : 2 < x₁) (hf : DifferentiableOn ℝ f (Set.Ioi 2))
+    {xₘ : ℝ} (hx : x₁ < xₘ) (hdx : deriv f xₘ = 0) (hdy : ∀ y ∈ Set.Ioi x₁, deriv f y ≠ 0) :
+    IsMaxOn f (.Ici x₁) xₘ := by
+  intro x hxm
+  by_cases! hx' : x < xₘ
+  · have : MonotoneOn f (Set.Icc x₁ xₘ) := by
+      refine monotoneOn_of_deriv_nonneg (convex_Icc _ _) ?_ ?_ (fun t ht => ?_)
+      · exact hf.continuousOn.mono ((Set.Icc_subset_Ioi_iff hx.le).2 he)
+      · exact (interior_Icc (α := ℝ)) ▸ hf.mono (by grind)
+      · sorry
+    exact this (by grind : x ∈ Set.Icc x₁ xₘ) (by grind : xₘ ∈ Set.Icc x₁ xₘ) hx'.le
+  · have : AntitoneOn f (.Ici xₘ) := by
+      refine antitoneOn_of_deriv_nonpos (convex_Ici _) ?_ ?_ (fun t ht => ?_)
+      · exact hf.continuousOn.mono (by grind)
+      · exact (interior_Ici (α := ℝ)) ▸ hf.mono (by grind)
+      · sorry
+    exact this (by grind : xₘ ∈ Set.Ici xₘ) (by grind : x ∈ Set.Ici xₘ) hx'
+
+noncomputable def Li (x : ℝ) : ℝ := ∫ t in 2..x, 1 / log t
+
+noncomputable def g (x₁ : ℝ) (x : ℝ) : ℝ := (log x / x) * ∫ t in x₁..x, 1 / (log t) ^ 2
+
+noncomputable def f (x₁ : ℝ) (x : ℝ) : ℝ := (log x / x) * (Li x - x / log x - Li x₁ + x₁ / log x₁)
+
+noncomputable def f' (x₁ : ℝ) (x : ℝ) : ℝ :=
+  - (1 / (x * log x ^ 2)) + 2 / (x * log x ^ 3) + (log x - 1) / x ^ 2 * (
+    x₁ / log x₁ ^ 2 + 2 * x₁ / log x₁ ^ 3 - ∫ t in x₁..x, 6 / (log t) ^ 4)
+
+/-- One can see the following inequality by calculating the derivative of `fun x => x / log x`. -/
+lemma eq {x₁ : ℝ} {x : ℝ} (hx : x₁ ≤ x) : f x₁ x = g x₁ x := by sorry
+
+/-- Using integration by parts, one can show that the derivative of `f` is `f'`. -/
+lemma eqderiv {x₁ : ℝ} {x : ℝ} (hx : x₁ < x) : deriv (f x₁) x = f' x₁ x := by sorry
+
+/-- We show that the following interval integral tendsto infinity. This can be proved by comparing
+`fun x => 1 / log x ^ 4` with `fun x => 1 / x`. -/
+lemma lem_integral {x₁ : ℝ} (hx₁ : 1 < x₁) :
+    Filter.Tendsto (fun x => ∫ t in x₁..x, 6 / (log t) ^ 4) Filter.atTop Filter.atTop := by
+  sorry
+
+/-- The lemma `lem_integral` suggests that `f'` converges to negative infinity. -/
+lemma f'_neg {x₁ : ℝ} : Filter.Tendsto (f' x₁) Filter.atTop Filter.atBot := by sorry
+
+/-- By bounding `∫ t in x₁..x, 6 / (log t) ^ 4 < 6 (x - x₁) / log x₁ ^ 4`, we see that
+`f' (x₁ * log x₁) > 0`. -/
+lemma f'_pos {x₁ : ℝ} : 0 < f' x₁ (x₁ * log x₁) := by sorry
+
+/-- As `0 < f' x₁ (x₁ * log x₁)` and `f'` converges to negative infinity, we can apply the
+intermediate value theorem `IsPreconnected.intermediate_value_Iic` to get a zero `xₘ` of `f'`
+(with `s = Ici (x₁ * log x₁)`). `xₘ` must be larger than `x₁ * log x₁`. -/
+lemma hasZero (x₁ : ℝ) : ∃ xₘ > (x₁ * log x₁), f' x₁ xₘ = 0 := by sorry
+
+noncomputable def f₁ (x₁ : ℝ) (x : ℝ) : ℝ := (x / log x) - (log x - 1) * ∫ t in x₁..x, 1 / log t ^ 2
+
+/-- In order to apply `strictAntif`, we need to show that `f' x = f₁ x / x ^ 2`. One can show
+the following identity by differentiating `fun x => x / log x ^ 2 + 2 * x / log x ^ 3`. -/
+lemma eqf'f₁ {x₁ : ℝ} {x : ℝ} (hx : x₁ < x) : f' x₁ x = f₁ x₁ x / x ^ 2 := by sorry
+
+/-- We also need to calculate the derivative of `f₁` and show that it is negative. -/
+lemma eqderivf₁ {x₁ : ℝ} {x : ℝ} (hx : x₁ < x) :
+    deriv (f₁ x₁) x = - ∫ t in x₁..x, 1 / log t ^ 2 / x
+    ∧ deriv (f₁ x₁) x < 0 := by
+  sorry
+
+lemma differentiable_g {x₁ : ℝ} (h₁ : 2 < x₁) : DifferentiableOn ℝ (g x₁) (Set.Ioi 2) := by
+  refine fun x hx => DifferentiableAt.differentiableWithinAt ?_
+  -- The integral of a continuous function is differentiable, so the second factor is differentiable.
+  have h_int_diff : DifferentiableAt ℝ (fun x => ∫ t in x₁..x, 1 / (Real.log t) ^ 2) x := by
+    -- The derivative of the integral of a function is the function itself.
+    have h_ftc : HasDerivAt (fun x => ∫ t in x₁..x, 1 / (Real.log t) ^ 2) (1 / (Real.log x) ^ 2) x := by
+      apply_rules [ intervalIntegral.integral_hasDerivAt_right ]
+      · apply_rules [ ContinuousOn.intervalIntegrable ]
+        exact continuousOn_of_forall_continuousAt fun y hy => ContinuousAt.div continuousAt_const ( ContinuousAt.pow ( Real.continuousAt_log ( by cases Set.mem_uIcc.mp hy <;> linarith [ hx.out ] ) ) _ ) ( ne_of_gt ( sq_pos_of_pos ( Real.log_pos ( by cases Set.mem_uIcc.mp hy <;> linarith [ hx.out ] ) ) ) );
+      · exact Measurable.stronglyMeasurable ( by exact Measurable.div measurable_const ( Measurable.pow_const ( Real.measurable_log ) _ ) ) |> fun h => h.stronglyMeasurableAtFilter;
+      · exact ContinuousAt.div continuousAt_const ( ContinuousAt.pow ( Real.continuousAt_log ( by linarith [ hx.out ] ) ) _ ) ( ne_of_gt ( sq_pos_of_pos ( Real.log_pos ( by linarith [ hx.out ] ) ) ) );
+    exact h_ftc.differentiableAt;
+  exact DifferentiableAt.mul ( DifferentiableAt.div ( Real.differentiableAt_log ( by linarith [ hx.out ] ) ) ( differentiableAt_id ) ( by linarith [ hx.out ] ) ) h_int_diff
+
+lemma deriv_g_eq {x₁ : ℝ} (h₁ : 2 < x₁) : ∀ x ∈ Set.Ioi x₁, deriv (g x₁) x = f₁ x₁ x / x ^ 2 := by
+  unfold g f₁;
+  intro x hx;
+  convert HasDerivAt.deriv ( HasDerivAt.mul ( HasDerivAt.div ( Real.hasDerivAt_log ( ne_of_gt <| lt_trans ( by linarith ) hx ) ) ( hasDerivAt_id' x ) ( ne_of_gt <| lt_trans ( by linarith ) hx ) ) ( ?_ ) ) using 1;
+  rotate_left;
+  · exact 1 / Real.log x ^ 2
+  · apply_rules [ intervalIntegral.integral_hasDerivAt_right ];
+    · apply_rules [ ContinuousOn.intervalIntegrable ];
+      exact continuousOn_of_forall_continuousAt fun y hy => ContinuousAt.div continuousAt_const ( ContinuousAt.pow ( Real.continuousAt_log ( by cases Set.mem_uIcc.mp hy <;> linarith [ hx.out ] ) ) _ ) ( ne_of_gt ( sq_pos_of_pos ( Real.log_pos ( by cases Set.mem_uIcc.mp hy <;> linarith [ hx.out ] ) ) ) );
+    · exact Measurable.stronglyMeasurable ( by exact Measurable.div measurable_const ( Measurable.pow_const ( Real.measurable_log ) _ ) ) |> fun h => h.stronglyMeasurableAtFilter;
+    · exact ContinuousAt.div continuousAt_const ( ContinuousAt.pow ( Real.continuousAt_log ( by linarith [ hx.out ] ) ) _ ) ( ne_of_gt ( sq_pos_of_pos ( Real.log_pos ( by linarith [ hx.out ] ) ) ) );
+  · by_cases h : x = 0 <;> by_cases h' : Real.log x = 0 <;> simp +decide [ *, sq, mul_assoc, mul_comm, div_eq_mul_inv ]
+    ring_nf
+    simp +decide [ sq, mul_assoc, h ]
+
+lemma differentiable_f₁ {x₁ : ℝ} (h₁ : 2 < x₁) : DifferentiableOn ℝ (f₁ x₁) (Set.Ioi 2) := by
+  refine' DifferentiableOn.sub ( DifferentiableOn.div ( differentiableOn_id ) ( Real.differentiableOn_log.mono _ ) _ ) _;
+  · exact fun x hx => ne_of_gt <| lt_trans zero_lt_two hx;
+  · exact fun x hx => ne_of_gt <| Real.log_pos <| by linarith [ hx.out ] ;
+  · refine' DifferentiableOn.mul ( DifferentiableOn.sub ( Real.differentiableOn_log.mono _ ) ( differentiableOn_const _ ) ) _;
+    · exact fun x hx => ne_of_gt <| lt_trans zero_lt_two hx;
+    · -- The integral of a continuous function is differentiable.
+      have h_int_diff : ∀ x > 2, HasDerivAt (fun x => ∫ t in x₁..x, 1 / (Real.log t) ^ 2) (1 / (Real.log x) ^ 2) x := by
+        intro x hx;
+        apply_rules [ intervalIntegral.integral_hasDerivAt_right ];
+        · apply_rules [ ContinuousOn.intervalIntegrable ];
+          exact continuousOn_of_forall_continuousAt fun y hy => ContinuousAt.div continuousAt_const ( ContinuousAt.pow ( Real.continuousAt_log ( by cases Set.mem_uIcc.mp hy <;> linarith ) ) _ ) ( ne_of_gt ( sq_pos_of_pos ( Real.log_pos ( by cases Set.mem_uIcc.mp hy <;> linarith ) ) ) );
+        · exact Measurable.stronglyMeasurable ( by exact Measurable.div measurable_const ( Measurable.pow_const ( Real.measurable_log ) _ ) ) |> fun h => h.stronglyMeasurableAtFilter;
+        · exact ContinuousAt.div continuousAt_const ( ContinuousAt.pow ( Real.continuousAt_log ( by linarith ) ) _ ) ( ne_of_gt ( sq_pos_of_pos ( Real.log_pos ( by linarith ) ) ) );
+      exact fun x hx => ( h_int_diff x hx |> HasDerivAt.differentiableAt |> DifferentiableAt.differentiableWithinAt )
+
+lemma deriv_f₁_neg {x₁ : ℝ} (h₁ : 2 < x₁) {x : ℝ} (hx : x₁ < x) : deriv (f₁ x₁) x < 0 := by
+  have h_deriv_f₁ : deriv (f₁ x₁) x = - (∫ t in x₁..x, 1 / (Real.log t) ^ 2) / x := by sorry
+  refine h_deriv_f₁ ▸ div_neg_of_neg_of_pos (Left.neg_neg_iff.2 ?_) (by grind)
+  refine intervalIntegral.intervalIntegral_pos_of_pos_on ?_ (fun t ht => ?_) hx
+  · simpa using (intervalIntegrable_iff_integrableOn_Ioc_of_le hx.le).2 <|
+      RS_prime.intervalIntegrable_inv_log_pow 0 2 (by grind) x
+  · simpa using inv_pos.2 (pow_pos (log_pos (by grind)) 2)
+
+lemma val_at_crit {x₁ xₘ : ℝ} (hm : 1 < xₘ) (h : f₁ x₁ xₘ = 0) : g x₁ xₘ = 1 / (log xₘ - 1) := by
+  have hI : ∫ t in x₁..xₘ, 1 / log t ^ 2 = (xₘ / log xₘ) / (log xₘ - 1) := by
+    unfold f₁ at h
+    grind
+  convert congr_arg (fun x => (log xₘ / xₘ) * x) hI using 1
+  ring_nf
+  simp [mul_comm, ne_of_gt (by linarith : 0 < xₘ), ne_of_gt (log_pos (by linarith) : 0 < log xₘ)]
+
+lemma exists_root_f₁ {x₁ : ℝ} (h : 14 ≤ x₁) : ∃ xₘ > x₁ * Real.log x₁, f₁ x₁ xₘ = 0 := by
+  obtain ⟨xₘ, hxmx, hfx⟩ := hasZero x₁
+  have hxmx_gt_x₁ : xₘ > x₁ := by
+    nlinarith [le_log_iff_exp_le (by linarith : 0 < x₁) |>.2 (exp_one_lt_d9.le.trans (by grind))]
+  have h_deriv_eq : deriv (f x₁) xₘ = deriv (g x₁) xₘ := by
+    refine Filter.EventuallyEq.deriv_eq ?_
+    filter_upwards [lt_mem_nhds hxmx_gt_x₁] with x hx using by rw [eq (by linarith)]
+  refine ⟨xₘ, hxmx, ?_⟩
+  rw [deriv_g_eq (by linarith) xₘ (by grind), eqderiv (by linarith), hfx, eq_div_iff] at h_deriv_eq
+  <;> nlinarith [pow_pos (by grind : 0 < xₘ) 2]
+
 @[blueprint
   "fks2-theorem-6-2"
   (title := "FKS2 Theorem 6, substep 2")
@@ -811,8 +966,23 @@ theorem theorem_6_1 {x₀ x₁ : ℝ} (h : x₁ ≥ max x₀ 14)
   (latexEnv := "sublemma")
   (discussion := 716)]
 theorem theorem_6_2 {x₁ : ℝ} (h : x₁ ≥ 14) (x : ℝ) (hx : x ≥ x₁) :
-  (log x / x) * ∫ t in x₁..x, 1 / (log t) ^ 2 < 1 / (log x₁ + log (log x₁) - 1) :=
-  sorry
+    (log x / x) * ∫ t in x₁..x, 1 / (log t) ^ 2 < 1 / (log x₁ + log (log x₁) - 1) := by
+  -- Auxiliary lemmas.
+  have : 1 < log x₁ := lt_log_iff_exp_lt (by linarith) |>.2 (exp_one_lt_d9.trans_le (by grind))
+  have : 0 < log (log x₁) := log_pos <| this
+  -- First find a root `xₘ` of `f₁`.
+  obtain ⟨xₘ, hxₘ_gt, hxₘ_root⟩ : ∃ xₘ > x₁ * log x₁, f₁ x₁ xₘ = 0 := exists_root_f₁ h
+  -- Show that `g` attains its maximum at `xₘ`.
+  have h_max : IsMaxOn (g x₁) (Set.Ici x₁) xₘ := by
+    apply hasMax <;> sorry
+  -- We can then finish our proof by showing that
+  -- `g x ≤ g xₘ = 1 / (log xₘ - 1) <  1 / (log x₁ + log (log x₁) - 1)`.
+  refine lt_of_le_of_lt (h_max hx) ?_
+  have := log_lt_log (mul_pos (by linarith) (log_pos (by linarith))) hxₘ_gt
+  rw [val_at_crit (by nlinarith : 1 < xₘ) hxₘ_root,
+    log_mul (by grind) (by linarith [log_pos (by grind : 1 < x₁)])] at *
+  gcongr
+  linarith
 
 @[blueprint
   "fks2-theorem-6-3"
